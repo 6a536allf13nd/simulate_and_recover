@@ -55,7 +55,7 @@ def simulate_and_recover(N, iterations=1000):
         bias = [a_est - a_true, v_est - v_true, t_est - t_true]
         squared_error = [b**2 for b in bias]
 
-        results.append([N, a_true, v_true, t_true, a_est, v_est, t_est, *bias, *squared_error])
+        results.append([a_true, v_true, t_true, a_est, v_est, t_est, *bias, *squared_error])
 
     return np.array(results)
 
