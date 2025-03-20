@@ -21,8 +21,11 @@ def sample_observed_stats(R_pred, M_pred, V_pred, N):
 # Inverse Equations
 def inverse_equations(R_obs, M_obs, V_obs):
     """ Compute estimated parameters (a_est, v_est, t_est) from observed summary statistics. """
-    L = np.log(R_obs / (1 - R_obs))
+    epsilon = 1e-6  # Small number to prevent division by zero
+    L = np.log((R_obs + epsilon) / (1 - R_obs + epsilon))
     v_est = np.sign(R_obs - 0.5) * 4 * np.sqrt(L * (R_obs**2 * L - R_obs * L + R_obs - 0.5) / V_obs)  # Eq. 4
+    if np.isnan(v_est) or v_est == 0:
+        v_est = 1e-6  # Small nonzero value to prevent division errors
     a_est = L / v_est  # Eq. 5
     t_est = M_obs - (a_est / (2 * v_est)) * ((1 - np.exp(-v_est * a_est)) / (1 + np.exp(-v_est * a_est)))  # Eq. 6
     return a_est, v_est, t_est
@@ -58,7 +61,14 @@ def simulate_and_recover(N, iterations=1000):
 
 if __name__ == "__main__":
     Ns = [10, 40, 4000]
-    all_results = np.vstack([simulate_and_recover(N) for N in Ns])
-    np.savetxt("results.csv", all_results, delimiter=",",
-               header="N,a_true,v_true,t_true,a_est,v_est,t_est,bias_a,bias_v,bias_t,se_a,se_v,se_t", comments="")
+    
+    for N in Ns:
+        results = simulate_and_recover(N)
+        filename = f"results_N{N}.csv"
+        
+        np.savetxt(filename, results, delimiter=",", fmt="%.5f",
+                   header="a_true,v_true,t_true,a_est,v_est,t_est,bias_a,bias_v,bias_t,se_a,se_v,se_t", comments="")
+        
+        print(f"Results for N={N} saved to {filename}")
+
     print("Simulation complete. Results saved to results.csv.")
